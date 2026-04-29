@@ -19,27 +19,27 @@ const getUserTransactions = async (userId, filters) => {
   const limit = parseInt(filters.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  let baseQuery = `FROM transactions WHERE user_id = $1`;
+  let baseQuery = `FROM transactions t LEFT JOIN categories c ON t.category_id = c.id WHERE t.user_id = $1`;
   let values = [userId];
   let index = 2;
 
   if (filters.type) {
-    baseQuery += ` AND type = $${index++}`;
+    baseQuery += ` AND t.type = $${index++}`;
     values.push(filters.type);
   }
 
   if (filters.categoryId) {
-    baseQuery += ` AND category_id = $${index++}`;
+    baseQuery += ` AND t.category_id = $${index++}`;
     values.push(filters.categoryId);
   }
 
   if (filters.startDate) {
-    baseQuery += ` AND date >= $${index++}`;
+    baseQuery += ` AND t.date >= $${index++}`;
     values.push(filters.startDate);
   }
 
   if (filters.endDate) {
-    baseQuery += ` AND date <= $${index++}`;
+    baseQuery += ` AND t.date <= $${index++}`;
     values.push(filters.endDate);
   }
 
@@ -48,8 +48,8 @@ const getUserTransactions = async (userId, filters) => {
   const countResult = await pool.query(countQuery, values);
   const total = parseInt(countResult.rows[0].count, 10);
 
-  // Fetch paginated records
-  let dataQuery = `SELECT * ${baseQuery} ORDER BY date DESC`;
+  // Fetch paginated records with category name
+  let dataQuery = `SELECT t.*, c.name as category_name ${baseQuery} ORDER BY t.date DESC, t.created_at DESC`;
   dataQuery += ` LIMIT $${index++} OFFSET $${index++}`;
   const dataValues = [...values, limit, offset];
 

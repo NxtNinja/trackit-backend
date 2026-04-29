@@ -28,7 +28,7 @@ const getSummary = async (userId, { startDate, endDate }) => {
 };
 
 // 🔹 Category-wise breakdown
-const getCategoryWise = async (userId, { startDate, endDate }) => {
+const getCategoryWise = async (userId, { startDate, endDate, type }) => {
   let query = `
     SELECT 
       c.name,
@@ -50,6 +50,12 @@ const getCategoryWise = async (userId, { startDate, endDate }) => {
   if (endDate) {
     query += ` AND t.date <= $${index++}`;
     values.push(endDate);
+  }
+
+  // 🔥 ADD THIS
+  if (type) {
+    query += ` AND t.type = $${index++}`;
+    values.push(type);
   }
 
   query += `
