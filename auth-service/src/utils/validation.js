@@ -19,7 +19,19 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const updateProfileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters long").optional(),
+  email: z.string().email("Invalid email address").optional(),
+});
+
+const updatePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: passwordSchema,
+});
+
 module.exports = {
   signupSchema,
   loginSchema,
+  updateProfileSchema,
+  updatePasswordSchema,
 };

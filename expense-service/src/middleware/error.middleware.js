@@ -1,9 +1,18 @@
-const errorHandler = (err, req, res, next) => {
-  console.error(err);
+const AppError = require("../utils/AppError");
 
-  res.status(err.statusCode || 500).json({
+const errorHandler = (err, req, res, next) => {
+  const isOperational = err instanceof AppError;
+
+  if (!isOperational) {
+    console.error("[UNHANDLED ERROR]", err);
+  }
+
+  const statusCode = err.statusCode || 500;
+  const message = isOperational ? err.message : "Internal Server Error";
+
+  res.status(statusCode).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message,
   });
 };
 

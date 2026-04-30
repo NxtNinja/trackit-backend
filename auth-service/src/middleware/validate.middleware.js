@@ -4,9 +4,10 @@ const validate = (schema) => (req, res, next) => {
     req.body = schema.parse(req.body);
     next();
   } catch (err) {
+    const message = err.errors.map(e => e.message).join(", ");
     return res.status(400).json({
       success: false,
-      message: err.errors,
+      message,
     });
   }
 };

@@ -118,10 +118,32 @@ const getCurrentUser = async (req, res, next) => {
   }
 };
 
+const updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.headers["x-user-id"] || (req.user && req.user.userId);
+    const updated = await authService.updateProfile(userId, req.body);
+    return successResponse(res, sanitizeUser(updated), "Profile updated successfully");
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updatePassword = async (req, res, next) => {
+  try {
+    const userId = req.headers["x-user-id"] || (req.user && req.user.userId);
+    await authService.updatePassword(userId, req.body);
+    return successResponse(res, null, "Password updated successfully");
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   signup,
   login,
   logout,
   refresh,
   getCurrentUser,
+  updateProfile,
+  updatePassword,
 };

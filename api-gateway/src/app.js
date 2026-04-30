@@ -10,6 +10,9 @@ const authMiddleware = require("./middleware/auth.middleware");
 
 const app = express();
 
+// Trust the load balancer's IP to accurately read X-Forwarded-For
+app.set("trust proxy", 1);
+
 // Rate Limiting - Protect the entire gateway
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

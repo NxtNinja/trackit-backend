@@ -109,10 +109,53 @@ const getCurrentUser = async (userId) => {
   return user;
 };
 
+const updateProfile = async (userId, { name, email }) => {
+  const user = await authRepo.getUserById(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (email && email !== user.email) {
+    const existing = await authRepo.findUserByEmail(email);
+    if (existing) {
+      throw new AppError("Email already in use", 400);
+    }
+  }
+
+  const payload = {};
+  if (name) payload.name = name;
+  if (email) payload.email = email;
+
+  const updated = await authRepo.updateUser(userId, payload);
+  return updated;
+};
+
+const updatePassword = async (userId, { currentPassword, newPassword }) => {
+  const user = await authRepo.findUserByIdFull(userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!isMatch) {
+    throw new AppError("Current password is incorrect", 400);
+  }
+
+  const isSamePassword = await bcrypt.compare(newPassword, user.password_hash);
+  if (isSamePassword) {
+    throw new AppError("New password cannot be the same as current password", 400);
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await authRepo.updateUser(userId, { password_hash: hashedPassword });
+};
+
 module.exports = {
   signup,
   login,
   refreshTokens,
   logout,
   getCurrentUser,
+  updateProfile,
+  updatePassword,
 };

@@ -12,6 +12,7 @@ module.exports = (app) => {
       createProxyMiddleware({
         target,
         changeOrigin: true,
+        xfwd: true, // Forward real client IP
         logLevel: "debug",
 
         on: {

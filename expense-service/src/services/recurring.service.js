@@ -24,6 +24,16 @@ const createFromTransaction = async (userId, transactionId, frequency) => {
   return recurring;
 };
 
+const deleteRecurring = async (userId, id) => {
+  return recurringRepo.deleteRecurring(id, userId);
+};
+
+const getUserRecurring = async (userId) => {
+  return recurringRepo.getUserRecurring(userId);
+};
+
 module.exports = {
   createFromTransaction,
+  deleteRecurring,
+  getUserRecurring,
 };

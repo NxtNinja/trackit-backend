@@ -13,7 +13,22 @@ const categorySchema = z.object({
   type: z.enum(["income", "expense"]),
 });
 
+const recurringSchema = z.object({
+  frequency: z.enum(["daily", "weekly", "monthly"], {
+    errorMap: () => ({ message: "frequency must be one of: daily, weekly, monthly" }),
+  }),
+});
+
+const budgetSchema = z.object({
+  amount: z.number().positive(),
+  categoryId: z.string().uuid(),
+  period: z.enum(["monthly", "yearly"]),
+  startDate: z.string().datetime().or(z.date().transform(d => d.toISOString())),
+});
+
 module.exports = {
   transactionSchema,
   categorySchema,
+  recurringSchema,
+  budgetSchema,
 };

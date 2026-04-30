@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+
 const cookieParser = require("cookie-parser");
 const errorHandler = require("./middleware/error.middleware");
 
@@ -12,6 +12,9 @@ const app = express();
 
 app.use(morgan("dev"));
 
+// Trust the gateway's IP to accurately read X-Forwarded-For
+app.set("trust proxy", 1);
+
 app.use(helmet());
 
 app.use(
@@ -21,15 +24,11 @@ app.use(
   }),
 );
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-});
-app.use(limiter);
+
 
 app.use(cookieParser());
 
-app.use(express.json());
+app.use(express.json({ limit: "50kb" }));
 
 
 app.use("/", authRoutes);

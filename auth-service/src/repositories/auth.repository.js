@@ -24,6 +24,11 @@ const getUserById = async (id) => {
   return result.rows[0];
 };
 
+const findUserByIdFull = async (id) => {
+  const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+  return result.rows[0];
+};
+
 const saveRefreshToken = async (userId, token, expiresAt) => {
   await pool.query(
     "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
@@ -54,13 +59,42 @@ const deleteExpiredUserTokens = async (userId) => {
   );
 };
 
+const updateUser = async (id, data) => {
+  const { name, email, password_hash } = data;
+  const fields = [];
+  const values = [];
+  let index = 1;
+
+  if (name) {
+    fields.push(`name = $${index++}`);
+    values.push(name);
+  }
+  if (email) {
+    fields.push(`email = $${index++}`);
+    values.push(email);
+  }
+  if (password_hash) {
+    fields.push(`password_hash = $${index++}`);
+    values.push(password_hash);
+  }
+
+  if (fields.length === 0) return null;
+
+  values.push(id);
+  const query = `UPDATE users SET ${fields.join(", ")} WHERE id = $${index} RETURNING id, name, email, created_at`;
+  const result = await pool.query(query, values);
+  return result.rows[0];
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
   getUserById,
+  findUserByIdFull,
   saveRefreshToken,
   findRefreshToken,
   deleteRefreshToken,
   deleteUserRefreshTokens,
   deleteExpiredUserTokens,
+  updateUser,
 };

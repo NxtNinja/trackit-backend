@@ -22,7 +22,9 @@ const getBudgets = async (userId) => {
   return result.rows;
 };
 
-const getBudgetUsage = async (userId) => {
+const getBudgetUsage = async (userId, { year, month }) => {
+  const date = `${year}-${String(month).padStart(2, "0")}-01`;
+
   const result = await pool.query(
     `
     SELECT 
@@ -40,23 +42,53 @@ const getBudgetUsage = async (userId) => {
       ON t.category_id = b.category_id
       AND t.user_id = b.user_id
       AND t.type = 'expense'
+      AND DATE_TRUNC('month', t.date) = DATE_TRUNC('month', $2::date)
       AND t.date >= b.start_date
 
     JOIN categories c 
       ON c.id = b.category_id
 
     WHERE b.user_id = $1
+      AND b.start_date <= $2::date
 
-    GROUP BY b.id, c.name
+    GROUP BY b.id, b.amount, b.period, b.start_date, c.name
+    ORDER BY c.name
     `,
-    [userId]
+    [userId, date]
   );
 
   return result.rows;
 };
 
+const updateBudget = async (id, userId, data) => {
+  const { amount, period, startDate } = data;
+
+  const result = await pool.query(
+    `
+    UPDATE budgets
+    SET amount = $1,
+        period = $2,
+        start_date = $3
+    WHERE id = $4 AND user_id = $5
+    RETURNING *
+    `,
+    [amount, period, startDate, id, userId]
+  );
+
+  return result.rows[0];
+};
+
+const deleteBudget = async (id, userId) => {
+  await pool.query(
+    `DELETE FROM budgets WHERE id = $1 AND user_id = $2`,
+    [id, userId]
+  );
+};
+
 module.exports = {
   createBudget,
   getBudgets,
-  getBudgetUsage
+  getBudgetUsage,
+  updateBudget,
+  deleteBudget,
 };
