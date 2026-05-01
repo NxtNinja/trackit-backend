@@ -7,8 +7,6 @@ const AppError = require("../utils/AppError");
 const serviceAuth = (req, res, next) => {
   const serviceKey = req.headers["x-internal-service-key"];
   const expectedKey = process.env.INTERNAL_SERVICE_KEY
-  console.log(expectedKey);
-  
 
   if (!serviceKey || serviceKey !== expectedKey) {
     console.warn(`[SECURITY WARNING] Unauthorized direct service access attempt from IP: ${req.ip}`);
