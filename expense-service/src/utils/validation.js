@@ -23,7 +23,14 @@ const budgetSchema = z.object({
   amount: z.number().positive(),
   categoryId: z.string().uuid(),
   period: z.enum(["monthly", "yearly"]),
-  startDate: z.string().datetime().or(z.date().transform(d => d.toISOString())),
+  startDate: z.string().date(), // YYYY-MM-DD — avoids timezone shift issues
+});
+
+// Category is immutable after creation — updates only allow amount, period, startDate
+const updateBudgetSchema = z.object({
+  amount: z.number().positive(),
+  period: z.enum(["monthly", "yearly"]),
+  startDate: z.string().date(), // YYYY-MM-DD — avoids timezone shift issues
 });
 
 module.exports = {
@@ -31,4 +38,5 @@ module.exports = {
   categorySchema,
   recurringSchema,
   budgetSchema,
+  updateBudgetSchema,
 };

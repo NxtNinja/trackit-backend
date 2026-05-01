@@ -53,7 +53,8 @@ const logout = async (req, res, next) => {
 
     const cookieOptions = {
       httpOnly: true,
-      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
     };
 
     res.clearCookie("token", cookieOptions);
@@ -94,6 +95,14 @@ const refresh = async (req, res, next) => {
 
     return successResponse(res, null, "Token refreshed successfully");
   } catch (err) {
+    // Clear cookies on refresh failure to prevent infinite loops in the frontend
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Strict",
+    };
+    res.clearCookie("token", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     next(err);
   }
 };

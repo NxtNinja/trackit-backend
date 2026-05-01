@@ -53,42 +53,45 @@ const login = async ({ email, password }) => {
 };
 
 const refreshTokens = async (token) => {
+  // Only catch JWT-specific errors; let AppErrors and DB errors propagate naturally
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    const storedToken = await authRepo.findRefreshToken(token);
-
-    if (!storedToken) {
-      throw new AppError("Invalid refresh token", 401);
-    }
-
-    const user = await authRepo.getUserById(decoded.userId);
-    if (!user) {
-      throw new AppError("User not found", 404);
-    }
-
-    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
-
-    const newRefreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_REFRESH_SECRET,
-      {
-        expiresIn: "7d",
-      },
-    );
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    // Rotate refresh token (optional but recommended for security)
-    await authRepo.deleteRefreshToken(token);
-    await authRepo.saveRefreshToken(user.id, newRefreshToken, expiresAt);
-
-    return { accessToken, refreshToken: newRefreshToken };
+    decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
   } catch (err) {
+    // jwt.verify throws JsonWebTokenError or TokenExpiredError
     throw new AppError("Invalid or expired refresh token", 401);
   }
+
+  const storedToken = await authRepo.findRefreshToken(token);
+  if (!storedToken) {
+    throw new AppError("Invalid refresh token", 401);
+  }
+
+  const user = await authRepo.getUserById(decoded.userId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    expiresIn: "15m",
+  });
+
+  const newRefreshToken = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  // Rotate refresh token (recommended for security)
+  await authRepo.deleteRefreshToken(token);
+  await authRepo.saveRefreshToken(user.id, newRefreshToken, expiresAt);
+
+  return { accessToken, refreshToken: newRefreshToken };
 };
 
 const logout = async (userId, token) => {
