@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const rateLimit = require("express-rate-limit");
+const { rateLimit } = require("express-rate-limit");
 
 const validate = require("../middleware/validate.middleware");
 const { signupSchema, loginSchema, updateProfileSchema, updatePasswordSchema } = require("../utils/validation");
@@ -10,14 +10,22 @@ const authController = require("../controllers/auth.controller");
 // Strict rate limiter for login route
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP or Email to 5 login requests per window
-  message: { success: false, message: "Too many login attempts. Please try again after 15 minutes." },
-  keyGenerator: (req) => {
-    return req.body.email ? req.body.email.toLowerCase() : req.ip;
-  }
+  max: 5, // Limit each IP to 5 login requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many login attempts. Please try again after 15 minutes." }
 });
 
-router.post("/signup", validate(signupSchema), authController.signup);
+// Strict rate limiter for signup route
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // Limit each IP to 3 accounts per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many accounts created from this IP. Please try again after an hour." }
+});
+
+router.post("/signup", signupLimiter, validate(signupSchema), authController.signup);
 router.post("/login", validate(loginSchema), loginLimiter, authController.login);
 router.post("/logout", authController.logout);
 router.post("/refresh", authController.refresh);

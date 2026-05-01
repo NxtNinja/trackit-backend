@@ -1,10 +1,10 @@
 const express = require("express");
-const cors = require("cors");
 const morgan = require("morgan");
 const helmet = require("helmet");
-
 const cookieParser = require("cookie-parser");
+
 const errorHandler = require("./middleware/error.middleware");
+const serviceAuth = require("./middleware/serviceAuth.middleware");
 const AppError = require("./utils/AppError");
 
 const transactionRoutes = require("./routes/transaction.routes");
@@ -21,14 +21,8 @@ app.use(morgan("dev"));
 // Trust the gateway's IP to accurately read X-Forwarded-For
 app.set("trust proxy", 1);
 
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  }),
-);
-
-
+// Internal Service Authentication - Ensure requests come from the Gateway
+app.use(serviceAuth);
 
 app.use(cookieParser());
 app.use(express.json({ limit: "50kb" }));

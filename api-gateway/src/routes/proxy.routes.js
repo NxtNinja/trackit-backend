@@ -17,6 +17,12 @@ module.exports = (app) => {
 
         on: {
           proxyReq: (proxyReq, req) => {
+            // Forward the internal service key to prove request origin
+            proxyReq.setHeader(
+              "x-internal-service-key",
+              process.env.INTERNAL_SERVICE_KEY || "fallback_secret_key"
+            );
+
             // forward user info
             if (req.user && req.user.userId) {
               proxyReq.setHeader("x-user-id", req.user.userId);
